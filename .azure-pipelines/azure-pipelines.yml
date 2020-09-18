@@ -1,0 +1,8 @@
+trigger:
+  - devel
+
+pool: Standard_DS1_v2
+
+steps:
+  - script: echo Hello Ansible
+    displayName: Hello Ansible
