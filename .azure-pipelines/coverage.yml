@@ -1,0 +1,23 @@
+jobs:
+  - job: Coverage
+    displayName: Code Coverage
+    container: default
+    steps:
+      - checkout: self
+        fetchDepth: 100
+      - task: DownloadPipelineArtifact@2
+        displayName: Download Coverage Data
+        inputs:
+          path: coverage/
+          patterns: 'Coverage */*'
+      - bash: .azure-pipelines/aggregate-coverage.py coverage/ test/results/coverage/
+        displayName: Aggregate Coverage Data
+      - bash: bin/ansible-test coverage xml --venv --venv-system-site-packages --color -v
+        displayName: Generate Coverage Report
+        condition: gt(variables.CoverageFileCount, 0)
+      - task: PublishCodeCoverageResults@1
+        inputs:
+          codeCoverageTool: Cobertura
+          summaryFileLocation: 'test/results/reports/coverage.xml'
+        displayName: Publish Coverage Results
+        condition: gt(variables.CoverageFileCount, 0)

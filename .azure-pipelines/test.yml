@@ -1,0 +1,25 @@
+steps:
+  - checkout: self
+    fetchDepth: 100
+  - bash: test/utils/shippable/timing.sh test/utils/shippable/shippable.sh ${{ parameters.test }}
+    displayName: Run Tests
+  - bash: |
+      if compgen -G 'test/results/junit/*.xml' > /dev/null; then
+        echo "##vso[task.setVariable variable=HaveTestResults]true"
+      fi
+      if compgen -G 'test/results/coverage/*' > /dev/null; then
+        echo "##vso[task.setVariable variable=HaveCoverageData]true"
+      fi
+    condition: succeededOrFailed()
+    displayName: Check Test Output
+  - task: PublishTestResults@2
+    condition: eq(variables.HaveTestResults, 'true')
+    inputs:
+      testResultsFiles: 'test/results/junit/*.xml'
+    displayName: Publish Test Results
+  - task: PublishPipelineArtifact@1
+    condition: eq(variables.HaveCoverageData, 'true')
+    displayName: Publish Coverage Data
+    inputs:
+      targetPath: 'test/results/coverage/'
+      artifactName: "Coverage $(System.JobAttempt) $(System.StageDisplayName) $(System.JobDisplayName)"

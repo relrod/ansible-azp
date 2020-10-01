@@ -9,11 +9,29 @@ script="${args[0]}"
 
 test="$1"
 
+# Azure Pipelines
+if [ "${SYSTEM_COLLECTIONURI}" ]; then
+    if [ "${SYSTEM_PULLREQUEST_TARGETBRANCH:-}" ]; then
+        IS_PULL_REQUEST=true
+        COMMIT_MESSAGE=$(git log --format=%B -n 1 HEAD^2)
+    else
+        COMMIT_MESSAGE=$(git log --format=%B -n 1 HEAD)
+    fi
+
+    if [ "${BUILD_REASON}" = "Schedule" ]; then
+        COMPLETE=true
+
+        if [ "${BUILD_SOURCEBRANCHNAME}" = "devel" ]; then
+            COVERAGE=true
+        fi
+    fi
+fi
+
 docker images ansible/ansible
 docker images quay.io/ansible/*
 docker ps
 
-for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v -e '^drydock/' -e '^quay.io/ansible/shippable-build-container:' | sed 's/^.* //'); do
+for container in $(docker ps --format '{{.Image}} {{.ID}}' | grep -v -e '^drydock/' -e '^quay.io/ansible/azure-pipelines-test-container:' | sed 's/^.* //'); do
     docker rm -f "${container}" || true  # ignore errors
 done
 
@@ -146,8 +164,6 @@ function cleanup
     fi
 }
 
-trap cleanup EXIT
-
 if [[ "${COVERAGE:-}" == "--coverage" ]]; then
     timeout=60
 else
@@ -156,5 +172,4 @@ fi
 
 ansible-test env --dump --show --timeout "${timeout}" --color -v
 
-"test/utils/shippable/check_matrix.py"
 "test/utils/shippable/${script}.sh" "${test}"

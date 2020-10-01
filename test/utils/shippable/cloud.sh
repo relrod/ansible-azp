@@ -7,7 +7,7 @@ IFS='/:' read -ra args <<< "$1"
 
 cloud="${args[0]}"
 python="${args[1]}"
-group="${args[2]}"
+group="1"
 
 target="shippable/${cloud}/group${group}/"
 

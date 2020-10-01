@@ -6,7 +6,7 @@ declare -a args
 IFS='/:' read -ra args <<< "$1"
 
 version="${args[1]}"
-group="${args[2]}"
+group="1"
 
 target="shippable/windows/group${group}/"
 

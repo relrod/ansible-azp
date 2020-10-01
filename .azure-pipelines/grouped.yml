@@ -1,0 +1,31 @@
+parameters:
+  - name: stage
+    type: string
+  - name: targets
+    type: object
+  - name: groups
+    type: object
+  - name: jobFormat
+    type: string
+    default: "{0}_{1}"
+  - name: nameFormat
+    type: string
+    default: "{0} {1}"
+  - name: testFormat
+    type: string
+    default: "{0}/{1}"
+
+stages:
+  - stage: ${{ parameters.stage }}
+    displayName: ${{ parameters.stage }}
+    dependsOn: []
+    jobs:
+      - ${{ each group in parameters.groups }}:
+        - ${{ each target in parameters.targets }}:
+          - job: ${{ replace(replace(replace(format(parameters.jobFormat, target.test, group), '/', '_'), '.', '_'), '-', '_') }}
+            displayName: ${{ format(parameters.nameFormat, target.name, group) }}
+            container: default
+            steps:
+              - template: test.yml
+                parameters:
+                  test: ${{ format(parameters.testFormat, target.test, group) }}

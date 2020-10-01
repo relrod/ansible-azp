@@ -1,0 +1,19 @@
+parameters:
+  - name: stage
+    type: string
+  - name: targets
+    type: object
+
+stages:
+  - stage: ${{ parameters.stage }}
+    displayName: ${{ parameters.stage }}
+    dependsOn: []
+    jobs:
+      - ${{ each target in parameters.targets }}:
+        - job: ${{ replace(replace(replace(target.test, '/', '_'), '.', '_'), '-', '_') }}
+          displayName: ${{ target.name }}
+          container: default
+          steps:
+            - template: test.yml
+              parameters:
+                test: ${{ target.test }}
